@@ -43,7 +43,7 @@ class OpenID extends Plugin
 	public function action_plugin_activation( $file )
 	{
 		if ( realpath( $file ) == __FILE__ ) {
-			if ( !extension_loaded('curl') && !@dl('curl') ) {
+			if ( !extension_loaded('curl') ) {
 				EventLog::log( 'Could not load CURL, which is needed for OpenID to work.', 'err', 'authentication', 'OpenID' );
 				throw new Exception( 'Could not load CURL, which is needed for OpenID to work.' );
 			}
@@ -195,6 +195,11 @@ class OpenID extends Plugin
 
 	function getConsumer()
 	{
+		/* Manually load EventLog, LogEntry, and User, since Consumer.php can't seem to find them otherwise */
+		habari_autoload( 'eventlog' );
+		habari_autoload( 'logentry' );
+		habari_autoload( 'user' );
+
 		require_once "Auth/OpenID/Consumer.php";
 		require_once "Auth/OpenID/FileStore.php";
 		require_once "Auth/OpenID/SReg.php";
@@ -206,7 +211,6 @@ class OpenID extends Plugin
 	{
 		$openid = self::getOpenIDURL();
 		$consumer = self::getConsumer();
-
 		$auth_request = $consumer->begin( $openid );
 
 		if ( !$auth_request ) {
